@@ -21,7 +21,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.example.franck.myapplication.R;
 import com.example.franck.myapplication.adapter.GalleryAdapter;
 import com.example.franck.myapplication.app.AppController;
-import com.example.franck.myapplication.models.Result;
+import com.example.franck.myapplication.models.Image;
 import com.example.franck.myapplication.network.InternetConnection;
 
 import org.json.JSONArray;
@@ -29,136 +29,128 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String TAG = "wtf";
-    private final String endpoint = "https://rickandmortyapi.com/api/character/?page=";
-    private ArrayList<Result> movies;
-    private static int count = 0;
+    private final static String TAG = "MainActivity";
+    private final static String URL = "https://rickandmortyapi.com/api/character/?page=";
+    private final static int AMOUNT_PAGES = 20;
+    //Api has only 20 pages
+    private ArrayList<Image> images;
     private ProgressDialog pDialog;
     private GalleryAdapter mAdapter;
     private RecyclerView recyclerView;
+    private FloatingActionButton fab;
+    private static int count = 0;
+    private final int[] imagesDrawable = new int[] {R.drawable.num_page_1, R.drawable.num_page_2, R.drawable.num_page_3,
+            R.drawable.num_page_4, R.drawable.num_page_5, R.drawable.num_page_6, R.drawable.num_page_7, R.drawable.num_page_8,
+            R.drawable.num_page_9, R.drawable.num_page_10, R.drawable.num_page_11, R.drawable.num_page_12, R.drawable.num_page_13,
+            R.drawable.num_page_14, R.drawable.num_page_15, R.drawable.num_page_16, R.drawable.num_page_17, R.drawable.num_page_18,
+            R.drawable.num_page_19, R.drawable.num_page_20};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
-
+        //init block
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-
         pDialog = new ProgressDialog(this);
-        movies = new ArrayList<>();
-        mAdapter = new GalleryAdapter(getApplicationContext(), movies);
-
+        images = new ArrayList<>();
+        mAdapter = new GalleryAdapter(getApplicationContext(), images);
         RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getApplicationContext(), 2);
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
-
+        fab = findViewById(R.id.fab);
         recyclerView.addOnItemTouchListener(new GalleryAdapter.RecyclerTouchListener(getApplicationContext(), recyclerView, new GalleryAdapter.ClickListener() {
             @Override
-            public void onClick(View view, int position) throws Exception{
+            public void onClick(View view, int position) throws Exception {
+                //transport data to fragment
                 Bundle bundle = new Bundle();
-
-                bundle.putParcelableArrayList("movies", movies);
+                bundle.putParcelableArrayList("images", images);
                 bundle.putInt("position", position);
 
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
                 SlideshowDialogFragment newFragment = SlideshowDialogFragment.newInstance();
                 newFragment.setArguments(bundle);
-                newFragment.show(ft,"efw");
+                newFragment.show(ft, "newFragment");
             }
 
             @Override
             public void onLongClick(View view, int position) {
-
             }
         }));
 
-        final int[] images = new int[] {R.drawable.num_page_1,R.drawable.num_page_2,R.drawable.num_page_3,R.drawable.num_page_4,
-                R.drawable.num_page_5,R.drawable.num_page_6,R.drawable.num_page_7,R.drawable.num_page_8,R.drawable.num_page_9,
-                R.drawable.num_page_10,R.drawable.num_page_11,R.drawable.num_page_12,R.drawable.num_page_13,R.drawable.num_page_14,
-                R.drawable.num_page_15,R.drawable.num_page_16,R.drawable.num_page_17,R.drawable.num_page_18,R.drawable.num_page_19,
-                R.drawable.num_page_20};
-        super.onResume();
-        final FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (InternetConnection.checkConnection(getApplicationContext())) {
-
-                    if (count == 20) {
-                        count = 0;
-                        Intent i = new Intent( getApplicationContext() , MainActivity.class );
-                        finish();
-                        getApplicationContext().startActivity(i);
-                        return;
-                    }
-                    count++;
-                    fetchImages(endpoint + (count));
-                    fab.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), images[count-1]));
-                    Toast.makeText(getApplicationContext(), "Added new images", Toast.LENGTH_LONG).show();
-                } else {
-                    Snackbar.make(view, R.string.internet, Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                }
+                fetchImagesAndUpdateFabImage(view, true);
             }
         });
-        fab.callOnClick();
-
-
     }
 
+    private void fetchImagesAndUpdateFabImage(View view, boolean fabClick) {
+        if (InternetConnection.checkConnection(getApplicationContext())) {
+            if (count == AMOUNT_PAGES) {
+                count = 0;
+            }
+            //Count increment if user click on fab
+            if (fabClick) {
+                count++;
+            }
 
+            fab.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), imagesDrawable[count - 1]));
+            fetchImages(URL + count);
+            Toast.makeText(getApplicationContext(), "New images", Toast.LENGTH_LONG).show();
+        } else {
+            Snackbar.make(view, R.string.internet, Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
+    }
+
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        count = savedInstanceState.getInt("count");
+        fetchImagesAndUpdateFabImage(getCurrentFocus(), false);
+    }
+
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("count", count);
+    }
 
     private void fetchImages(String endpoint) {
+        JsonObjectRequest req = new JsonObjectRequest(endpoint, null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        //clear images to load new images(on new page)
+                        images.clear();
 
-        if (InternetConnection.checkConnection(getApplicationContext())) {
-            JsonObjectRequest req = new JsonObjectRequest(endpoint,null,
-                    new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            Log.d(TAG, response.toString());
-                            pDialog.hide();
+                        pDialog.hide();
+                        try {
+                            JSONArray moviesJson = response.getJSONArray("results");
 
-                            try {
-
-
-                                JSONArray moviesJson = response.getJSONArray("results");
-                                Log.d("wtf", moviesJson.length()+"");
-                                for (int i = 0; i < moviesJson.length(); i++) {
-
-                                    JSONObject object = moviesJson.getJSONObject(i);
-
-                                    Log.d(TAG, object.toString());
-                                    Result movie = new Result(object.getString("name"),object.getString("image"));
-                                Log.d(TAG, object.getString("name"));
-                                    movies.add(movie);
-                                }
-                            } catch (JSONException j) {
-                                j.printStackTrace();
+                            for (int i = 0; i < moviesJson.length(); i++) {
+                                JSONObject object = moviesJson.getJSONObject(i);
+                                Image movie = new Image(object.getString("name"), object.getString("image"));
+                                images.add(movie);
                             }
-
-
-
-
-
-                            mAdapter.notifyDataSetChanged();
+                        } catch (JSONException j) {
+                            Toast.makeText(getApplicationContext(), "Error with server", Toast.LENGTH_LONG).show();
                         }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Log.e(TAG, "Error: " + error.getMessage());
-                    pDialog.hide();
-                }
-            });
 
-            AppController.getInstance().addToRequestQueue(req);
-        }
+                        mAdapter.notifyDataSetChanged();
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(getApplicationContext(), "Error with server", Toast.LENGTH_LONG).show();
+                pDialog.hide();
+            }
+        });
+
+        AppController.getInstance().addToRequestQueue(req);
     }
 }

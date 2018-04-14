@@ -11,7 +11,7 @@ public class Images {
     private Info info;
     @SerializedName("results")
     @Expose
-    private List<Result> results = null;
+    private List<Image> results = null;
 
     public Info getInfo() {
         return info;
@@ -21,11 +21,11 @@ public class Images {
         this.info = info;
     }
 
-    public List<Result> getResults() {
+    public List<Image> getResults() {
         return results;
     }
 
-    public void setResults(List<Result> results) {
+    public void setResults(List<Image> results) {
         this.results = results;
     }
 

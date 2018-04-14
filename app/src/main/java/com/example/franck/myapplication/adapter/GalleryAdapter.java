@@ -12,19 +12,13 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.franck.myapplication.R;
-import com.example.franck.myapplication.models.Result;
+import com.example.franck.myapplication.models.Image;
 
 import java.util.List;
 
-
-
-/**
- * Created by Lincoln on 31/03/16.
- */
-
 public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.MyViewHolder> {
 
-    private List<Result> movies;
+    private List<Image> images;
 
     private Context mContext;
 
@@ -37,10 +31,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.MyViewHo
         }
     }
 
-
-    public GalleryAdapter(Context context, List<Result> movies) {
+    public GalleryAdapter(Context context, List<Image> images) {
         mContext = context;
-        this.movies = movies;
+        this.images = images;
     }
 
     @Override
@@ -53,18 +46,18 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.MyViewHo
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        Result movie = movies.get(position);
+        Image movie = images.get(position);
 
         Glide.with(mContext).load(movie.getImage())
                 .thumbnail(0.5f)
                 .crossFade()
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                 .into(holder.thumbnail);
     }
 
     @Override
     public int getItemCount() {
-        return movies.size();
+        return images.size();
     }
 
     public interface ClickListener {
@@ -101,10 +94,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.MyViewHo
 
             View child = rv.findChildViewUnder(e.getX(), e.getY());
             if (child != null && clickListener != null && gestureDetector.onTouchEvent(e)) {
-              try {
-                  clickListener.onClick(child, rv.getChildPosition(child));
-              } catch (Exception exp) {
-              }
+                try {
+                    clickListener.onClick(child, rv.getChildPosition(child));
+                } catch (Exception exp) {
+                }
             }
             return false;
         }
