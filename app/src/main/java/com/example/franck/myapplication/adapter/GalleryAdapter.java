@@ -1,7 +1,9 @@
 package com.example.franck.myapplication.adapter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -11,9 +13,12 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawable;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.example.franck.myapplication.R;
 import com.example.franck.myapplication.models.Image;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.MyViewHolder> {
@@ -21,6 +26,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.MyViewHo
     private List<Image> images;
 
     private Context mContext;
+
+    private List<Bitmap> bitmapList = new ArrayList<>();
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public ImageView thumbnail;
@@ -58,6 +65,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.MyViewHo
     @Override
     public int getItemCount() {
         return images.size();
+
+    }
+
+    public List<Bitmap> getBitmapList() {
+        return bitmapList;
     }
 
     public interface ClickListener {

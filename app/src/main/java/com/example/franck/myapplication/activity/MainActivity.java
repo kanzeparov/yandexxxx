@@ -1,8 +1,8 @@
 package com.example.franck.myapplication.activity;
 
+import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -29,19 +29,24 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private final static String TAG = "MainActivity";
     private final static String URL = "https://rickandmortyapi.com/api/character/?page=";
-    private final static int AMOUNT_PAGES = 20;
+    public final static int AMOUNT_PAGES = 20;
+    private final static int START_PAGE = 0;
     //Api has only 20 pages
     private ArrayList<Image> images;
     private ProgressDialog pDialog;
     private GalleryAdapter mAdapter;
     private RecyclerView recyclerView;
+    private IntroFragment fragment;
     private FloatingActionButton fab;
     private static int count = 0;
+    private FragmentTransaction fragmentTransaction;
+    private FragmentManager fragmentManager;
     private final int[] imagesDrawable = new int[] {R.drawable.num_page_1, R.drawable.num_page_2, R.drawable.num_page_3,
             R.drawable.num_page_4, R.drawable.num_page_5, R.drawable.num_page_6, R.drawable.num_page_7, R.drawable.num_page_8,
             R.drawable.num_page_9, R.drawable.num_page_10, R.drawable.num_page_11, R.drawable.num_page_12, R.drawable.num_page_13,
@@ -53,8 +58,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+        fragment = new IntroFragment();
+        fragmentManager = getFragmentManager();
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.add(R.id.placeHolder, fragment);
+        fragmentTransaction.commit();
+
+
         //init block
-        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        recyclerView = findViewById(R.id.recycler_view);
         pDialog = new ProgressDialog(this);
         images = new ArrayList<>();
         mAdapter = new GalleryAdapter(getApplicationContext(), images);
@@ -85,25 +98,39 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 fetchImagesAndUpdateFabImage(view, true);
             }
         });
     }
 
+
+
     private void fetchImagesAndUpdateFabImage(View view, boolean fabClick) {
         if (InternetConnection.checkConnection(getApplicationContext())) {
             if (count == AMOUNT_PAGES) {
-                count = 0;
+                count = START_PAGE;
             }
+
             //Count increment if user click on fab
             if (fabClick) {
                 count++;
+            }
+
+            //If we have init activity, we return, else we remove fragment
+            if(count == START_PAGE) {
+                return;
+            } else {
+                fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.remove(fragment).commit();
             }
 
             fab.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), imagesDrawable[count - 1]));
             fetchImages(URL + count);
             Toast.makeText(getApplicationContext(), "New images", Toast.LENGTH_LONG).show();
         } else {
+
+
             Snackbar.make(view, R.string.internet, Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         }
@@ -112,13 +139,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         count = savedInstanceState.getInt("count");
+//        images = savedInstanceState.getParcelableArrayList("images");
         fetchImagesAndUpdateFabImage(getCurrentFocus(), false);
     }
 
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt("count", count);
+        outState.putParcelableArrayList("images", images);
     }
+
+    protected void onPause(){
+        super.onPause();
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.remove(fragment).commit();
+    }
+
 
     private void fetchImages(String endpoint) {
         JsonObjectRequest req = new JsonObjectRequest(endpoint, null,
