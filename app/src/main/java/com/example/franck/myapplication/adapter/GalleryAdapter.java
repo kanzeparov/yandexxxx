@@ -10,6 +10,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -108,8 +109,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.MyViewHo
             if (child != null && clickListener != null && gestureDetector.onTouchEvent(e)) {
                 try {
                     clickListener.onClick(child, rv.getChildPosition(child));
-                } catch (Exception exp) {
-                }
+                } catch (Exception exp) {}
             }
             return false;
         }

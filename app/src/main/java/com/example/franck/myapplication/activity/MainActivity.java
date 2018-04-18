@@ -1,5 +1,6 @@
 package com.example.franck.myapplication.activity;
 
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
@@ -44,9 +45,11 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private IntroFragment fragment;
     private FloatingActionButton fab;
-    private static int count = 0;
+    private static int count = 1;
     private FragmentTransaction fragmentTransaction;
     private FragmentManager fragmentManager;
+    private String mOrientation;
+    private boolean isLandscape;
     private final int[] imagesDrawable = new int[] {R.drawable.num_page_1, R.drawable.num_page_2, R.drawable.num_page_3,
             R.drawable.num_page_4, R.drawable.num_page_5, R.drawable.num_page_6, R.drawable.num_page_7, R.drawable.num_page_8,
             R.drawable.num_page_9, R.drawable.num_page_10, R.drawable.num_page_11, R.drawable.num_page_12, R.drawable.num_page_13,
@@ -58,13 +61,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
         fragment = new IntroFragment();
         fragmentManager = getFragmentManager();
         fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.add(R.id.placeHolder, fragment);
         fragmentTransaction.commit();
-
 
         //init block
         recyclerView = findViewById(R.id.recycler_view);
@@ -76,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
         fab = findViewById(R.id.fab);
+
         recyclerView.addOnItemTouchListener(new GalleryAdapter.RecyclerTouchListener(getApplicationContext(), recyclerView, new GalleryAdapter.ClickListener() {
             @Override
             public void onClick(View view, int position) throws Exception {
@@ -98,27 +100,30 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 fetchImagesAndUpdateFabImage(view, true);
+                Log.d("TAG", count + " - count");
             }
         });
+
+        //if we have not internet we will show basic image
+        if (InternetConnection.checkConnection(getApplicationContext())) {
+            fetchImagesAndUpdateFabImage(getCurrentFocus(), false);
+        }
     }
-
-
 
     private void fetchImagesAndUpdateFabImage(View view, boolean fabClick) {
         if (InternetConnection.checkConnection(getApplicationContext())) {
             if (count == AMOUNT_PAGES) {
-                count = START_PAGE;
+                count = 0;
             }
 
-            //Count increment if user click on fab
+            //Count increment if user click on fab, and current orientation did not change
             if (fabClick) {
                 count++;
             }
 
             //If we have init activity, we return, else we remove fragment
-            if(count == START_PAGE) {
+            if (count == START_PAGE) {
                 return;
             } else {
                 fragmentTransaction = fragmentManager.beginTransaction();
@@ -130,7 +135,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "New images", Toast.LENGTH_LONG).show();
         } else {
 
-
             Snackbar.make(view, R.string.internet, Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         }
@@ -139,7 +143,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         count = savedInstanceState.getInt("count");
-//        images = savedInstanceState.getParcelableArrayList("images");
         fetchImagesAndUpdateFabImage(getCurrentFocus(), false);
     }
 
@@ -149,18 +152,18 @@ public class MainActivity extends AppCompatActivity {
         outState.putParcelableArrayList("images", images);
     }
 
-    protected void onPause(){
+    protected void onPause() {
         super.onPause();
         fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.remove(fragment).commit();
     }
 
-
-    private void fetchImages(String endpoint) {
+    private void fetchImages(final String endpoint) {
         JsonObjectRequest req = new JsonObjectRequest(endpoint, null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
+                        Log.d("TAG", "onResponse fetchImages");
                         //clear images to load new images(on new page)
                         images.clear();
 
@@ -176,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
                         } catch (JSONException j) {
                             Toast.makeText(getApplicationContext(), "Error with server", Toast.LENGTH_LONG).show();
                         }
-
+                        Log.d("TAG", images.get(0).getName() + " - name;" + endpoint);
                         mAdapter.notifyDataSetChanged();
                     }
                 }, new Response.ErrorListener() {

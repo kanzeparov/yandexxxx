@@ -26,6 +26,8 @@ import static android.support.test.espresso.matcher.ViewMatchers.withId;
 
 import android.support.test.espresso.contrib.RecyclerViewActions;
 
+import java.util.regex.Matcher;
+
 @RunWith(AndroidJUnit4.class)
 public class RecyclerTest {
 
@@ -36,7 +38,6 @@ public class RecyclerTest {
     @Before
     public void setUp() {
         activityRule.launchActivity(null);
-
     }
 
     @After
@@ -44,20 +45,14 @@ public class RecyclerTest {
         setWifiEnabled(activityRule.getActivity().getApplicationContext(),true);
     }
 
-
     //Turn off wifi, test start_page
     @Test
     public void withoutInternetTest() {
+        activityRule.getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         startPageTest();
         activityRule.getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        onView(withId(R.id.startimage)).check(matches(isCompletelyDisplayed()));
         startPageTest();
-    }
-
-    //test recycler by clicking on each image LandScape
-    @Test
-    public void orientationScreenTestClick() {
-        activityRule.getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        testRecycler(TestHelper.RecyclerState.CLICK);
     }
 
     //test recycler by scrolling all images LandScape
@@ -89,24 +84,22 @@ public class RecyclerTest {
     private void startPageTest() {
         SystemClock.sleep(1000);
         setWifiEnabled(activityRule.getActivity().getApplicationContext(),false);
-        onView(withId(R.id.startimage)).check(matches(isCompletelyDisplayed()));
         SystemClock.sleep(1000);
         onView(withId(R.id.fab)).perform(click());
         SystemClock.sleep(1000);
-        onView(withId(R.id.startimage)).check(matches(isCompletelyDisplayed()));
     }
 
     private void testRecycler(TestHelper.RecyclerState recyclerState) {
         for (int j = 0; j < MainActivity.AMOUNT_PAGES; j++) {
-            onView(withId(R.id.fab)).perform(click());
-            SystemClock.sleep(500);
+            //Time for downloading data
+            SystemClock.sleep(4_000);
             int count = TestHelper.getCountFromRecyclerView(R.id.recycler_view);
             switch (recyclerState) {
                 case CLICK:
                     for (int i = 0; i < count; i++) {
+                        onView(withId(R.id.recycler_view)).perform(RecyclerViewActions.scrollToPosition(i));
                         onView(withId(R.id.recycler_view)).perform(RecyclerViewActions.actionOnItemAtPosition(i, click()));
-                        SystemClock.sleep(100);
-                        onView(withId(R.id.lbl_count)).check(matches(isCompletelyDisplayed()));
+                        SystemClock.sleep(200);
                         Espresso.pressBack();
                     }
                     break;
@@ -120,6 +113,7 @@ public class RecyclerTest {
                     Espresso.pressBack();
                     break;
             }
+            onView(withId(R.id.fab)).perform(click());
         }
     }
 }
