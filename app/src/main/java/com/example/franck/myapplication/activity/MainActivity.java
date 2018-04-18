@@ -1,6 +1,5 @@
 package com.example.franck.myapplication.activity;
 
-import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
@@ -30,14 +29,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private final static String TAG = "MainActivity";
     private final static String URL = "https://rickandmortyapi.com/api/character/?page=";
     public final static int AMOUNT_PAGES = 20;
-    private final static int START_PAGE = 0;
+    private final static int INIT_PAGE = 0;
+    private final static int START_PAGE = 1;
     //Api has only 20 pages
     private ArrayList<Image> images;
     private ProgressDialog pDialog;
@@ -45,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private IntroFragment fragment;
     private FloatingActionButton fab;
-    private static int count = 1;
+    private static int count = START_PAGE;
     private FragmentTransaction fragmentTransaction;
     private FragmentManager fragmentManager;
     private String mOrientation;
@@ -123,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             //If we have init activity, we return, else we remove fragment
-            if (count == START_PAGE) {
+            if (count == INIT_PAGE) {
                 return;
             } else {
                 fragmentTransaction = fragmentManager.beginTransaction();
